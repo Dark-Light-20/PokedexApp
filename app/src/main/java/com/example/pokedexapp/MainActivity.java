@@ -1,5 +1,6 @@
 package com.example.pokedexapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +26,10 @@ public class MainActivity extends AppCompatActivity {
 
     private Retrofit retrofit;
 
+    private int offset;
+
+    private boolean availableToLoad;
+
     private RecyclerView recyclerView;
     private PokemonListAdapter pokemonListAdapter;
 
@@ -38,24 +43,50 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(pokemonListAdapter);
         recyclerView.setHasFixedSize(true);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 3);
+        final GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 3);
         recyclerView.setLayoutManager(gridLayoutManager);
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                if (dy > 0) {
+                    int visibleItemCount = gridLayoutManager.getChildCount();
+                    int totalItemCount = gridLayoutManager.getItemCount();
+                    int pastVisibleItems = gridLayoutManager.findFirstCompletelyVisibleItemPosition();
+
+                    if (availableToLoad) {
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
+                            Log.i(TAG, "final");
+
+                            availableToLoad = false;
+                            offset+=20;
+                            getData(offset);
+                        }
+                    }
+                }
+            }
+        });
 
         retrofit = new Retrofit.Builder()
                 .baseUrl("http://pokeapi.co/api/v2/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
-        getData();
+        availableToLoad = true;
+        offset = 0;
+        getData(offset);
     }
 
-    private void getData() {
+    private void getData(int offset) {
         PokeapiService service = retrofit.create(PokeapiService.class);
-        Call<PokemonAnswer> pokemonAnswerCall = service.getPokemonList();
+        Call<PokemonAnswer> pokemonAnswerCall = service.getPokemonList(20, offset);
 
         pokemonAnswerCall.enqueue(new Callback<PokemonAnswer>() {
             @Override
             public void onResponse(Call<PokemonAnswer> call, Response<PokemonAnswer> response) {
+                availableToLoad = true;
                 if (response.isSuccessful()){
                     PokemonAnswer pokemonAnswer = response.body();
                     ArrayList<Pokemon> pokemonList = pokemonAnswer.getResults();
@@ -68,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<PokemonAnswer> call, Throwable t) {
+                availableToLoad = true;
                 Log.e(TAG, "onFailure: " + t.getMessage());
             }
         });
