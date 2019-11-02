@@ -17,9 +17,16 @@
         android:id="@+id/pokemonName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/app_name"
         android:layout_gravity="center_horizontal"
         android:textAlignment="center"
         android:textAllCaps="true"/>
+
+    <TextView
+        android:id="@+id/pokemonType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:textAlignment="center"
+        android:textAllCaps="true" />
 
 </LinearLayout>

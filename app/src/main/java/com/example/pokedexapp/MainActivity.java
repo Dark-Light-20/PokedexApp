@@ -10,6 +10,9 @@ import android.util.Log;
 
 import com.example.pokedexapp.models.Pokemon;
 import com.example.pokedexapp.models.PokemonAnswer;
+import com.example.pokedexapp.models.PokemonDetail;
+import com.example.pokedexapp.models.Type;
+import com.example.pokedexapp.models.TypeDetail;
 import com.example.pokedexapp.pokeapi.PokeapiService;
 
 import java.util.ArrayList;
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
                             Log.i(TAG, "final");
 
                             availableToLoad = false;
-                            offset+=20;
+                            offset+=17;
                             getData(offset);
                         }
                     }
@@ -79,6 +82,41 @@ public class MainActivity extends AppCompatActivity {
         getData(offset);
     }
 
+    private void loadType(final Pokemon pokemon) {
+        PokeapiService service = retrofit.create(PokeapiService.class);
+        Call<PokemonDetail> pokemonDetailCall = service.getPokemonDetail(pokemon.getNumber());
+
+        pokemonDetailCall.enqueue(new Callback<PokemonDetail>() {
+            @Override
+            public void onResponse(Call<PokemonDetail> call, Response<PokemonDetail> response) {
+                if (response.isSuccessful()) {
+                    PokemonDetail pokemonDetail = response.body();
+                    ArrayList<Type> typesArrayList = pokemonDetail.getTypes();
+
+                    Type type;
+                    if (typesArrayList.size()>1) {
+                        type = typesArrayList.get(1);
+                    }
+                    else {
+                        type = typesArrayList.get(0);
+                    }
+
+                    TypeDetail typeDetail = type.getType();
+                    String typeName = typeDetail.getName();
+
+                    pokemon.setType(typeName);
+                } else {
+                    Log.e(TAG, "onResponseDetail: " + response.errorBody());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PokemonDetail> call, Throwable t) {
+                Log.e(TAG, "onFailureDetail: " + t.getMessage());
+            }
+        });
+    }
+
     private void getData(int offset) {
         PokeapiService service = retrofit.create(PokeapiService.class);
         Call<PokemonAnswer> pokemonAnswerCall = service.getPokemonList(20, offset);
@@ -90,6 +128,10 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful()){
                     PokemonAnswer pokemonAnswer = response.body();
                     ArrayList<Pokemon> pokemonList = pokemonAnswer.getResults();
+
+                    for (int i=0; i<pokemonList.size(); i++) {
+                        loadType(pokemonList.get(i));
+                    }
 
                     pokemonListAdapter.addPokemonList(pokemonList);
                 } else {
