@@ -10,7 +10,7 @@
         android:layout_width="96dp"
         android:layout_height="96dp"
 
-        android:contentDescription="Pokemon Picture"
+        android:contentDescription="@string/pic_description"
         android:layout_gravity="center_horizontal" />
 
     <TextView
