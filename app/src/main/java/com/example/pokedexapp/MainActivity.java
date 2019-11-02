@@ -1,6 +1,8 @@
 package com.example.pokedexapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -23,10 +25,21 @@ public class MainActivity extends AppCompatActivity {
 
     private Retrofit retrofit;
 
+    private RecyclerView recyclerView;
+    private PokemonListAdapter pokemonListAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        recyclerView = findViewById(R.id.recyclerView);
+        pokemonListAdapter = new PokemonListAdapter(this);
+        recyclerView.setAdapter(pokemonListAdapter);
+        recyclerView.setHasFixedSize(true);
+
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 3);
+        recyclerView.setLayoutManager(gridLayoutManager);
 
         retrofit = new Retrofit.Builder()
                 .baseUrl("http://pokeapi.co/api/v2/")
@@ -47,10 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     PokemonAnswer pokemonAnswer = response.body();
                     ArrayList<Pokemon> pokemonList = pokemonAnswer.getResults();
 
-                    for (int i=0; i<pokemonList.size(); i++){
-                        Pokemon pokemon = pokemonList.get(i);
-                        Log.i(TAG, "Pokemon: " + pokemon.getName());
-                    }
+                    pokemonListAdapter.addPokemonList(pokemonList);
                 } else {
                     Log.e(TAG, "onResponse: " + response.errorBody());
                 }
